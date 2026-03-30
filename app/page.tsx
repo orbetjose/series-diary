@@ -128,14 +128,9 @@ export default function Home() {
 
   return (
     <main className="md:max-w-3xl mx-auto min-h-screen">
-      <div className="flex justify-center items-center relative">
         <h1 className="text-center text-2xl pt-4">Diario de series Mignori</h1>
-        <div className="absolute right-0">
-          <LogoutButton />
-        </div>
-      </div>
       <div className="flex gap-4 pb-4 pt-12 justify-center">
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row items-center gap-4">
           <Select onValueChange={(value) => handleSelectChange(value, "year")}>
             <SelectTrigger className="w-45">
               <SelectValue placeholder="Seleccionar año" />
@@ -179,7 +174,7 @@ export default function Home() {
       </div>
       <div>
         <Table>
-           <TableCaption>Filtra algunas series</TableCaption>
+          <TableCaption>Filtra algunas series</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
@@ -206,6 +201,9 @@ export default function Home() {
         onOpenChange={setIsOpen}
         refreshSeries={() => setRefreshTrigger((prev) => prev + 1)}
       />
+      <div className="pt-12 text-center">
+        <LogoutButton />
+      </div>
     </main>
   );
 }
