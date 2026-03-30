@@ -12,57 +12,68 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
-import { useForm, SubmitHandler, Controller } from "react-hook-form";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 type FormRecordProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  refreshSeries: () => void;
 };
+
+const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+"] as const;
 
 const formSchema = z.object({
   title: z
     .string()
-    .min(5, "Bug title must be at least 5 characters.")
-    .max(32, "Bug title must be at most 32 characters."),
-  plataform: z
-    .string()
-    .min(5, "Bug title must be at least 5 characters.")
-    .max(32, "Bug title must be at most 32 characters."),
-  rating: z
-    .string()
-    .min(5, "Bug title must be at least 5 characters.")
-    .max(32, "Bug title must be at most 32 characters."),
-  finishDate: z.date({
-    error: "A date of birth is required.",
+    .min(5, "The title must be at least 5 characters.")
+    .max(32, "The title must be at most 32 characters."),
+  platform: z.enum(plataforms, {
+    message: "La plataforma es requerida.",
   }),
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters.")
-    .max(100, "Description must be at most 100 characters."),
+  rating: z.string().min(0, "El rating debe ser entre 0 y 5.").max(5, "El rating debe ser entre 0 y 5."),
+  finishDate: z.date({
+    message: "La fecha es requerida.",
+  }),
 });
 
-export default function FormRecord({ open, onOpenChange }: FormRecordProps) {
+export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRecordProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      plataform: "",
+      platform: "Netflix",
       rating: "",
-      description: "",
       finishDate: undefined,
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log(data);
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    const supabase = createClient();
+
+    const { error } = await supabase.from("series").insert({
+      title: data.title,
+      platform: data.platform,
+      rating: parseFloat(data.rating),
+      finished_at: data.finishDate.toISOString(),
+    });
+
+    if (error) {
+      console.error("Error inserting series:", error);
+    } else {
+      console.log("Serie creada con exito");
+      form.reset(); 
+      onOpenChange(false);
+      refreshSeries();
+    }
   }
 
   return (
@@ -96,19 +107,31 @@ export default function FormRecord({ open, onOpenChange }: FormRecordProps) {
               )}
             />
             <Controller
-              name="plataform"
+              name="platform"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-series-record-plataform">Plataforma de streaming</FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-series-record-plataform"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Netflix"
-                    autoComplete="off"
-                  />
+                  <FieldLabel htmlFor="form-series-record-platform">Plataforma de streaming</FieldLabel>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  <Select
+                    name={field.name}
+                    value={field.value || "Netflix"}
+                    onValueChange={field.onChange}>
+                    <SelectTrigger className="w-45" aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Seleccionar plataforma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {plataforms.map((platform) => (
+                          <SelectItem
+                            key={platform}
+                            value={platform}>
+                            {platform}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </Field>
               )}
             />
@@ -122,15 +145,13 @@ export default function FormRecord({ open, onOpenChange }: FormRecordProps) {
                     {...field}
                     id="form-series-record-rating"
                     aria-invalid={fieldState.invalid}
-                    placeholder="8.5"
+                    placeholder="3"
                     autoComplete="off"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
-
-            {/* Datepicker aquí */}
             <Controller
               name="finishDate"
               control={form.control}
@@ -142,55 +163,24 @@ export default function FormRecord({ open, onOpenChange }: FormRecordProps) {
                       <Button
                         id="form-series-record-finish-date"
                         variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !value && "text-muted-foreground"
-                        )}
-                        aria-invalid={fieldState.invalid}
-                      >
+                        className={cn("w-full justify-start text-left font-normal", !value && "text-muted-foreground")}
+                        aria-invalid={fieldState.invalid}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {value ? format(value, "PPP") : "Seleccionar fecha"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start">
                       <Calendar
                         mode="single"
                         selected={value}
                         onSelect={onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        initialFocus
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        autoFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            <Controller
-              name="description"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-demo-description">Description</FieldLabel>
-                  <InputGroup>
-                    <InputGroupTextarea
-                      {...field}
-                      id="form-rhf-demo-description"
-                      placeholder="I'm having an issue with the login button on mobile."
-                      rows={6}
-                      className="min-h-24 resize-none"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <InputGroupAddon align="block-end">
-                      <InputGroupText className="tabular-nums">{field.value.length}/100 characters</InputGroupText>
-                    </InputGroupAddon>
-                  </InputGroup>
-                  <FieldDescription>
-                    Include steps to reproduce, expected behavior, and what actually happened.
-                  </FieldDescription>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -199,12 +189,12 @@ export default function FormRecord({ open, onOpenChange }: FormRecordProps) {
         </form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Cancelar</Button>
           </DialogClose>
           <Button
             type="submit"
             form="form-series-record">
-            Submit
+            Guardar
           </Button>
         </DialogFooter>
       </DialogContent>

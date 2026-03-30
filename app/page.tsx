@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FormRecord from "@/components/form-record";
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/logout-button";
 
 type Series = {
   id: string;
@@ -39,10 +39,10 @@ const months = [
 
 export default function Home() {
   const [allSeries, setAllSeries] = useState<Series[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filterDate, setFilterDate] = useState<FilterDate>({
     year: "",
     month: "",
@@ -58,13 +58,12 @@ export default function Home() {
         console.error("Error fetching series:", error);
       } else {
         setAllSeries(data);
-        setFilteredSeries(data);
       }
       setLoading(false);
     };
 
     fetchSeries();
-  }, []);
+  }, [refreshTrigger]);
 
   // Obtener meses disponibles cuando cambia el año
   useEffect(() => {
@@ -96,9 +95,6 @@ export default function Home() {
     let results = allSeries;
 
     // Filtro 1: Por búsqueda de texto
-    if (searchTerm) {
-      results = results.filter((serie) => serie.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
 
     // Filtro 2: Por año y mes
     if (filterDate.year) {
@@ -118,7 +114,7 @@ export default function Home() {
     }
 
     setFilteredSeries(results);
-  }, [searchTerm, filterDate, allSeries]);
+  }, [filterDate]);
 
   const handleSelectChange = (value: string, type: "year" | "month") => {
     setFilterDate((prev) => ({
@@ -128,28 +124,20 @@ export default function Home() {
     }));
   };
 
-  const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   if (loading) return <div>Loading...</div>;
 
   return (
     <main className="md:max-w-3xl mx-auto min-h-screen">
-      <h1 className="text-center text-2xl pt-4">Diario de series Mignori</h1>
-      <div className="flex gap-4 pb-4 pt-12">
-        <div className="w-3/5">
-          <Input
-            id="search"
-            type="text"
-            placeholder="Ingresa el nombre de la serie"
-            value={searchTerm}
-            onChange={handleChangeInput}
-          />
+      <div className="flex justify-center items-center relative">
+        <h1 className="text-center text-2xl pt-4">Diario de series Mignori</h1>
+        <div className="absolute right-0">
+          <LogoutButton />
         </div>
+      </div>
+      <div className="flex gap-4 pb-4 pt-12 justify-center">
         <div className="flex gap-4">
           <Select onValueChange={(value) => handleSelectChange(value, "year")}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-45">
               <SelectValue placeholder="Seleccionar año" />
             </SelectTrigger>
             <SelectContent>
@@ -162,7 +150,7 @@ export default function Home() {
           </Select>
           {filterDate.year.length > 0 && (
             <Select onValueChange={(value) => handleSelectChange(value, "month")}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Seleccionar mes" />
               </SelectTrigger>
               <SelectContent>
@@ -181,13 +169,17 @@ export default function Home() {
             </Select>
           )}
           <div>
-            <Button onClick={() => setIsOpen(true)}>Crear serie</Button>
+            <Button
+              size="lg"
+              onClick={() => setIsOpen(true)}>
+              Crear serie
+            </Button>
           </div>
         </div>
       </div>
       <div>
         <Table>
-          <TableCaption>Series encontradas: {filteredSeries.length}</TableCaption>
+           <TableCaption>Filtra algunas series</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
@@ -197,18 +189,23 @@ export default function Home() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredSeries.map((serie) => (
-              <TableRow key={serie.id}>
-                <TableCell>{serie.title}</TableCell>
-                <TableCell>{serie.platform}</TableCell>
-                <TableCell>{serie.rating}/5</TableCell>
-                <TableCell>{serie.finished_at ? new Date(serie.finished_at).toLocaleDateString() : "-"}</TableCell>
-              </TableRow>
-            ))}
+            {filteredSeries.length > 0 &&
+              filteredSeries.map((serie) => (
+                <TableRow key={serie.id}>
+                  <TableCell>{serie.title}</TableCell>
+                  <TableCell>{serie.platform}</TableCell>
+                  <TableCell>{serie.rating}/5</TableCell>
+                  <TableCell>{serie.finished_at ? new Date(serie.finished_at).toLocaleDateString() : "-"}</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
-      <FormRecord open={isOpen} onOpenChange={setIsOpen} />
+      <FormRecord
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        refreshSeries={() => setRefreshTrigger((prev) => prev + 1)}
+      />
     </main>
   );
 }
