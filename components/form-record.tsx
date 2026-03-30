@@ -176,7 +176,6 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                         mode="single"
                         selected={value}
                         onSelect={onChange}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         autoFocus
                       />
                     </PopoverContent>
