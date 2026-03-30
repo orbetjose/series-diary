@@ -1,58 +1,214 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/lib/utils";
-import Link from "next/link";
-import { Suspense } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import FormRecord from "@/components/form-record";
+import { Button } from "@/components/ui/button";
+
+type Series = {
+  id: string;
+  title: string;
+  platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+";
+  rating: number;
+  created_at: string;
+  finished_at: string | null;
+};
+
+type FilterDate = {
+  year: string;
+  month: string;
+};
+
+const months = [
+  { name: "Enero", value: "01" },
+  { name: "Febrero", value: "02" },
+  { name: "Marzo", value: "03" },
+  { name: "Abril", value: "04" },
+  { name: "Mayo", value: "05" },
+  { name: "Junio", value: "06" },
+  { name: "Julio", value: "07" },
+  { name: "Agosto", value: "08" },
+  { name: "Septiembre", value: "09" },
+  { name: "Octubre", value: "10" },
+  { name: "Noviembre", value: "11" },
+  { name: "Diciembre", value: "12" },
+];
 
 export default function Home() {
-  return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>Next.js Supabase Starter</Link>
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
-            </div>
-            {!hasEnvVars ? (
-              <EnvVarWarning />
-            ) : (
-              <Suspense>
-                <AuthButton />
-              </Suspense>
-            )}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
-        </div>
+  const [allSeries, setAllSeries] = useState<Series[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false)
+  const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterDate, setFilterDate] = useState<FilterDate>({
+    year: "",
+    month: "",
+  });
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const supabase = createClient();
 
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
-            <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-              target="_blank"
-              className="font-bold hover:underline"
-              rel="noreferrer"
-            >
-              Supabase
-            </a>
-          </p>
-          <ThemeSwitcher />
-        </footer>
+  // Cargar TODAS las series una sola vez
+  useEffect(() => {
+    const fetchSeries = async () => {
+      const { data, error } = await supabase.from("series").select("*");
+      if (error) {
+        console.error("Error fetching series:", error);
+      } else {
+        setAllSeries(data);
+        setFilteredSeries(data);
+      }
+      setLoading(false);
+    };
+
+    fetchSeries();
+  }, []);
+
+  // Obtener meses disponibles cuando cambia el año
+  useEffect(() => {
+    if (!filterDate.year) {
+      setAvailableMonths([]);
+      return;
+    }
+
+    const monthsWithData = new Set<string>();
+
+    allSeries.forEach((serie) => {
+      if (!serie.finished_at) return;
+
+      const finishedDate = new Date(serie.finished_at);
+      const finishedYear = finishedDate.getFullYear().toString();
+      const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
+
+      if (finishedYear === filterDate.year) {
+        monthsWithData.add(finishedMonth);
+      }
+    });
+
+    setAvailableMonths(Array.from(monthsWithData).sort());
+  }, [filterDate.year, allSeries]);
+
+  // Reemplaza los últimos 3 useEffect por este:
+
+  useEffect(() => {
+    let results = allSeries;
+
+    // Filtro 1: Por búsqueda de texto
+    if (searchTerm) {
+      results = results.filter((serie) => serie.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
+    // Filtro 2: Por año y mes
+    if (filterDate.year) {
+      results = results.filter((serie) => {
+        if (!serie.finished_at) return false;
+
+        const finishedDate = new Date(serie.finished_at);
+        const finishedYear = finishedDate.getFullYear().toString();
+        const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
+
+        if (finishedYear !== filterDate.year) return false;
+
+        if (filterDate.month && finishedMonth !== filterDate.month) return false;
+
+        return true;
+      });
+    }
+
+    setFilteredSeries(results);
+  }, [searchTerm, filterDate, allSeries]);
+
+  const handleSelectChange = (value: string, type: "year" | "month") => {
+    setFilterDate((prev) => ({
+      ...prev,
+      [type]: value,
+      ...(type === "year" && { month: "" }),
+    }));
+  };
+
+  const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <main className="md:max-w-3xl mx-auto min-h-screen">
+      <h1 className="text-center text-2xl pt-4">Diario de series Mignori</h1>
+      <div className="flex gap-4 pb-4 pt-12">
+        <div className="w-3/5">
+          <Input
+            id="search"
+            type="text"
+            placeholder="Ingresa el nombre de la serie"
+            value={searchTerm}
+            onChange={handleChangeInput}
+          />
+        </div>
+        <div className="flex gap-4">
+          <Select onValueChange={(value) => handleSelectChange(value, "year")}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Seleccionar año" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {filterDate.year.length > 0 && (
+            <Select onValueChange={(value) => handleSelectChange(value, "month")}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Seleccionar mes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {months
+                    .filter((month) => availableMonths.includes(month.value))
+                    .map((month) => (
+                      <SelectItem
+                        key={month.value}
+                        value={month.value}>
+                        {month.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
+          <div>
+            <Button onClick={() => setIsOpen(true)}>Crear serie</Button>
+          </div>
+        </div>
       </div>
+      <div>
+        <Table>
+          <TableCaption>Series encontradas: {filteredSeries.length}</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Título</TableHead>
+              <TableHead>Plataforma</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Terminada</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredSeries.map((serie) => (
+              <TableRow key={serie.id}>
+                <TableCell>{serie.title}</TableCell>
+                <TableCell>{serie.platform}</TableCell>
+                <TableCell>{serie.rating}/5</TableCell>
+                <TableCell>{serie.finished_at ? new Date(serie.finished_at).toLocaleDateString() : "-"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <FormRecord open={isOpen} onOpenChange={setIsOpen} />
     </main>
   );
 }
