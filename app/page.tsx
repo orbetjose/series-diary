@@ -11,9 +11,10 @@ import FormDetails from "@/components/ui/form-details";
 import { Series } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 
-type FilterDate = {
+type filters = {
   year: string;
   month: string;
+  type: string;
 };
 
 const months = [
@@ -38,9 +39,10 @@ export default function Home() {
   const [selectedSerie, setSelectedSerie] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [filterDate, setFilterDate] = useState<FilterDate>({
+  const [filters, setFilters] = useState<filters>({
     year: "",
     month: "",
+    type: "",
   });
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const supabase = createClient();
@@ -62,7 +64,7 @@ export default function Home() {
   }, [refreshTrigger]);
 
   const filteredSeries = useMemo(() => {
-    if (!filterDate.year) return [];
+    if (!filters.year) return [];
 
     return allSeries.filter((serie) => {
       if (!serie.finished_at) return false;
@@ -70,17 +72,19 @@ export default function Home() {
       const finishedDate = new Date(serie.finished_at);
       const finishedYear = finishedDate.getFullYear().toString();
       const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
+      const finishedType = serie.type.toLowerCase();
 
-      if (finishedYear !== filterDate.year) return false;
-      if (filterDate.month && finishedMonth !== filterDate.month) return false;
+       if (filters.type && finishedType !== filters.type) return false;
+      if (finishedYear !== filters.year) return false;
+      if (filters.month && finishedMonth !== filters.month) return false;
 
       return true;
     });
-  }, [allSeries, filterDate]);
+  }, [allSeries, filters]);
 
   // Obtener meses disponibles cuando cambia el año
   useEffect(() => {
-    if (!filterDate.year) {
+    if (!filters.year) {
       setAvailableMonths([]);
       return;
     }
@@ -94,26 +98,27 @@ export default function Home() {
       const finishedYear = finishedDate.getFullYear().toString();
       const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
 
-      if (finishedYear === filterDate.year) {
+      if (finishedYear === filters.year) {
         monthsWithData.add(finishedMonth);
       }
     });
 
     setAvailableMonths(Array.from(monthsWithData).sort());
-  }, [filterDate.year, allSeries]);
+  }, [filters.year, allSeries]);
 
   const showDetails = (serie: Series) => {
     setIsOpenDetails(true);
     setSelectedSerie(serie);
   };
 
-  const handleSelectChange = (value: string, type: "year" | "month") => {
-    setFilterDate((prev) => ({
+  const handleSelectChange = (value: string, type: "year" | "month" | "type") => {
+    setFilters((prev) => ({
       ...prev,
       [type]: value,
       ...(type === "year" && { month: "" }),
     }));
   };
+
 
   if (loading)
     return (
@@ -139,7 +144,7 @@ export default function Home() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          {filterDate.year.length > 0 && (
+          {filters.year.length > 0 && (
             <Select onValueChange={(value) => handleSelectChange(value, "month")}>
               <SelectTrigger className="w-45">
                 <SelectValue placeholder="Seleccionar mes" />
@@ -155,6 +160,20 @@ export default function Home() {
                         {month.name}
                       </SelectItem>
                     ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
+          {filters.year.length > 0 && (
+            <Select onValueChange={(value) => handleSelectChange(value, "type")}>
+              <SelectTrigger className="w-45">
+                <SelectValue placeholder="Seleccionar tipo serie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="serie">Serie</SelectItem> 
+                  <SelectItem value="película">Pelicula</SelectItem>
+                  <SelectItem value="documental">Documental</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -181,9 +200,11 @@ export default function Home() {
             {filteredSeries.length > 0 &&
               filteredSeries.map((serie) => (
                 <TableRow key={serie.id}>
-                  <TableCell
-                    className={`${serie.type === "Serie" ? "bg-green-600" : ""} ${serie.type === "Película" ? "bg-white text-black" : ""} ${serie.type === "Documental" ? "bg-red-600" : ""}`}>
-                    {serie.type}
+                  <TableCell>
+                    <span
+                      className={`${serie.type === "Serie" ? "bg-green-600" : ""} ${serie.type === "Película" ? "bg-white text-black" : ""} ${serie.type === "Documental" ? "bg-red-600" : ""} px-2 rounded-full`}>
+                      {serie.type}
+                    </span>
                   </TableCell>
                   <TableCell>{serie.title}</TableCell>
                   <TableCell>{serie.platform}</TableCell>
