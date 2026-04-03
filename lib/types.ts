@@ -4,7 +4,7 @@ export type Series = {
   id: string;
   title: string;
   type: "Serie" | "Película" | "Documental";
-  platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+";
+  platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+" | "Cine";
   rating: number;
   season: number;
   comments: string;
@@ -12,19 +12,19 @@ export type Series = {
   finished_at: string | null;
 };
 
-export const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+"] as const;
+export const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+", "Cine"] as const;
 export const types = ["Serie", "Película", "Documental"] as const;
 
 export const formSchema = z.object({
   title: z
     .string()
-    .min(5, "The title must be at least 5 characters.")
-    .max(32, "The title must be at most 32 characters."),
+    .min(5, "El título debe tener al menos 5 caracteres.")
+    .max(32, "El título debe tener como máximo 32 caracteres."),
   platform: z.enum(plataforms, {
     message: "La plataforma es requerida.",
   }),
   type: z.enum(types, {
-    message: "El tipo es requerida.",
+    message: "El tipo es requerido.",
   }),
   rating: z.number().min(1, "La calificación debe ser al menos 1.").max(5, "La calificación debe ser como máximo 5."),
   finishDate: z.date({
