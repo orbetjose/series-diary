@@ -190,3 +190,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+.translate-middle {
+  transform: translate(-50%, -50%);
+}

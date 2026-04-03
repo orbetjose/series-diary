@@ -13,15 +13,20 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, StarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import * as z from "zod";
+
+import { plataforms, types } from "@/lib/types";
+import { formSchema } from "@/lib/types";
 
 type FormRecordProps = {
   open: boolean;
@@ -29,30 +34,21 @@ type FormRecordProps = {
   refreshSeries: () => void;
 };
 
-const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+"] as const;
 
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(5, "The title must be at least 5 characters.")
-    .max(32, "The title must be at most 32 characters."),
-  platform: z.enum(plataforms, {
-    message: "La plataforma es requerida.",
-  }),
-  rating: z.string().min(0, "El rating debe ser entre 0 y 5.").max(5, "El rating debe ser entre 0 y 5."),
-  finishDate: z.date({
-    message: "La fecha es requerida.",
-  }),
-});
+
+
 
 export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRecordProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      type: "Serie",
       platform: "Netflix",
-      rating: "",
+      rating: 1,
       finishDate: undefined,
+      season: 1,
+      comments: "",
     },
   });
 
@@ -60,9 +56,12 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
     const supabase = createClient();
 
     const { error } = await supabase.from("series").insert({
+      type: data.type,
       title: data.title,
+      season: data.season,
+      comments: data.comments,
       platform: data.platform,
-      rating: parseFloat(data.rating),
+      rating: data.rating,
       finished_at: data.finishDate.toISOString(),
     });
 
@@ -70,7 +69,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       console.error("Error inserting series:", error);
     } else {
       console.log("Serie creada con exito");
-      form.reset(); 
+      form.reset();
       onOpenChange(false);
       refreshSeries();
     }
@@ -107,6 +106,37 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
               )}
             />
             <Controller
+              name="type"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-series-record-type">Tipo</FieldLabel>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  <Select
+                    name={field.name}
+                    value={field.value || "Serie"}
+                    onValueChange={field.onChange}>
+                    <SelectTrigger
+                      className="w-45"
+                      aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {types.map((type) => (
+                          <SelectItem
+                            key={type}
+                            value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+            <Controller
               name="platform"
               control={form.control}
               render={({ field, fieldState }) => (
@@ -117,7 +147,9 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                     name={field.name}
                     value={field.value || "Netflix"}
                     onValueChange={field.onChange}>
-                    <SelectTrigger className="w-45" aria-invalid={fieldState.invalid}>
+                    <SelectTrigger
+                      className="w-45"
+                      aria-invalid={fieldState.invalid}>
                       <SelectValue placeholder="Seleccionar plataforma" />
                     </SelectTrigger>
                     <SelectContent>
@@ -135,19 +167,28 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                 </Field>
               )}
             />
+
             <Controller
               name="rating"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-series-record-rating">Calificación</FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-series-record-rating"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="3"
-                    autoComplete="off"
-                  />
+                  <RadioGroup
+                    defaultValue={field.value ? String(field.value) : "1"}
+                    onValueChange={field.onChange}
+                    className="flex">
+                    {Array.from({length: 5}, (_, index) => index + 1).map((rate, index) => (
+                      <div className="relative" key={index}>
+                        <StarIcon fill={(field.value > index) ? "yellow" : "none"} color={field.value > index ? "yellow" : "gray"} />
+                        <RadioGroupItem                          
+                          value={String(field.value)}                          
+                          id={`option-${rate}`}                          
+                          className="absolute top-1/2 left-1/2 translate-middle opacity-0"
+                        />
+                      </div>
+                    ))}
+                  </RadioGroup>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -180,6 +221,40 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                       />
                     </PopoverContent>
                   </Popover>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="season"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-series-record-season">Temporada</FieldLabel>
+                  <Input
+                    {...field}
+                    id="form-series-record-season"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="3"
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="comments"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-series-record-comments">Comentarios</FieldLabel>
+                  <Textarea
+                    {...field}
+                    id="form-series-record-comments"
+                    placeholder="Escribe tus comentarios sobre la serie"
+                    aria-invalid={fieldState.invalid}
+                    autoComplete="off"
+                  />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

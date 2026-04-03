@@ -1,21 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FormRecord from "@/components/form-record";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
-
-type Series = {
-  id: string;
-  title: string;
-  platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+";
-  rating: number;
-  created_at: string;
-  finished_at: string | null;
-};
+import FormDetails from "@/components/ui/form-details";
+import { Series } from "@/lib/types";
+import { Spinner } from "@/components/ui/spinner";
 
 type FilterDate = {
   year: string;
@@ -40,7 +34,8 @@ const months = [
 export default function Home() {
   const [allSeries, setAllSeries] = useState<Series[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
+  const [isOpenDetails, setIsOpenDetails] = useState(false);
+  const [selectedSerie, setSelectedSerie] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filterDate, setFilterDate] = useState<FilterDate>({
@@ -50,20 +45,38 @@ export default function Home() {
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const supabase = createClient();
 
-  // Cargar TODAS las series una sola vez
   useEffect(() => {
     const fetchSeries = async () => {
-      const { data, error } = await supabase.from("series").select("*");
+      const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: true });
       if (error) {
         console.error("Error fetching series:", error);
       } else {
         setAllSeries(data);
       }
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     };
 
     fetchSeries();
   }, [refreshTrigger]);
+
+  const filteredSeries = useMemo(() => {
+    if (!filterDate.year) return [];
+
+    return allSeries.filter((serie) => {
+      if (!serie.finished_at) return false;
+
+      const finishedDate = new Date(serie.finished_at);
+      const finishedYear = finishedDate.getFullYear().toString();
+      const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
+
+      if (finishedYear !== filterDate.year) return false;
+      if (filterDate.month && finishedMonth !== filterDate.month) return false;
+
+      return true;
+    });
+  }, [allSeries, filterDate]);
 
   // Obtener meses disponibles cuando cambia el año
   useEffect(() => {
@@ -89,32 +102,10 @@ export default function Home() {
     setAvailableMonths(Array.from(monthsWithData).sort());
   }, [filterDate.year, allSeries]);
 
-  // Reemplaza los últimos 3 useEffect por este:
-
-  useEffect(() => {
-    let results = allSeries;
-
-    // Filtro 1: Por búsqueda de texto
-
-    // Filtro 2: Por año y mes
-    if (filterDate.year) {
-      results = results.filter((serie) => {
-        if (!serie.finished_at) return false;
-
-        const finishedDate = new Date(serie.finished_at);
-        const finishedYear = finishedDate.getFullYear().toString();
-        const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
-
-        if (finishedYear !== filterDate.year) return false;
-
-        if (filterDate.month && finishedMonth !== filterDate.month) return false;
-
-        return true;
-      });
-    }
-
-    setFilteredSeries(results);
-  }, [filterDate]);
+  const showDetails = (serie: Series) => {
+    setIsOpenDetails(true);
+    setSelectedSerie(serie);
+  };
 
   const handleSelectChange = (value: string, type: "year" | "month") => {
     setFilterDate((prev) => ({
@@ -124,11 +115,18 @@ export default function Home() {
     }));
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="relative h-screen w-screen">
+        <div className=" absolute left-1/2 top-1/2 translate-middle">
+          <Spinner className="size-8" />
+        </div>
+      </div>
+    );
 
   return (
     <main className="md:max-w-3xl mx-auto min-h-screen">
-        <h1 className="text-center text-2xl pt-4">Diario de series Mignori</h1>
+      <h1 className="text-center text-2xl pt-4">Diario de Películas y Series</h1>
       <div className="flex gap-4 pb-4 pt-12 justify-center">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <Select onValueChange={(value) => handleSelectChange(value, "year")}>
@@ -137,8 +135,6 @@ export default function Home() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2026">2026</SelectItem>
               </SelectGroup>
             </SelectContent>
@@ -164,33 +160,38 @@ export default function Home() {
             </Select>
           )}
           <div>
-            <Button
-              size="lg"
-              onClick={() => setIsOpen(true)}>
-              Crear serie
-            </Button>
+            <Button onClick={() => setIsOpen(true)}>Crear serie</Button>
           </div>
         </div>
       </div>
       <div>
-        <Table>
+        <Table className="text-center">
           <TableCaption>Filtra algunas series</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead>Título</TableHead>
-              <TableHead>Plataforma</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead>Terminada</TableHead>
+              <TableHead className="text-center">Tipo</TableHead>
+              <TableHead className="text-center">Título</TableHead>
+              <TableHead className="text-center">Plataforma</TableHead>
+              <TableHead className="text-center">Terminada</TableHead>
+              <TableHead className="text-center">Temporada</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredSeries.length > 0 &&
               filteredSeries.map((serie) => (
                 <TableRow key={serie.id}>
+                  <TableCell
+                    className={`${serie.type === "Serie" ? "bg-green-600" : ""} ${serie.type === "Película" ? "bg-white text-black" : ""} ${serie.type === "Documental" ? "bg-red-600" : ""}`}>
+                    {serie.type}
+                  </TableCell>
                   <TableCell>{serie.title}</TableCell>
                   <TableCell>{serie.platform}</TableCell>
-                  <TableCell>{serie.rating}/5</TableCell>
                   <TableCell>{serie.finished_at ? new Date(serie.finished_at).toLocaleDateString() : "-"}</TableCell>
+                  <TableCell>{serie.season}</TableCell>
+                  <TableCell>
+                    <Button onClick={() => showDetails(serie)}> Detalles</Button>
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
@@ -199,7 +200,13 @@ export default function Home() {
       <FormRecord
         open={isOpen}
         onOpenChange={setIsOpen}
-        refreshSeries={() => setRefreshTrigger((prev) => prev + 1)}
+        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
+      />
+      <FormDetails
+        open={isOpenDetails}
+        onOpenChange={setIsOpenDetails}
+        serie={selectedSerie}
+        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
       />
       <div className="pt-12 text-center">
         <LogoutButton />
