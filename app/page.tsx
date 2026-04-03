@@ -179,7 +179,7 @@ export default function Home() {
             </Select>
           )}
           <div>
-            <Button onClick={() => setIsOpen(true)}>Crear serie</Button>
+            <Button onClick={() => setIsOpen(true)}>Crear</Button>
           </div>
         </div>
       </div>
