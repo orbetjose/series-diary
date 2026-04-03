@@ -6,7 +6,7 @@ export type Series = {
   type: "Serie" | "Película" | "Documental";
   platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+" | "Cine";
   rating: number;
-  season: number;
+  season: string;
   comments: string;
   created_at: string;
   finished_at: string | null;
@@ -30,6 +30,6 @@ export const formSchema = z.object({
   finishDate: z.date({
     message: "La fecha es requerida.",
   }),
-  season: z.number().min(1, "La temporada debe ser un número positivo."),
+  season: z.string().max(32, "La temporada debe tener como máximo 32 caracteres.").optional(),
   comments: z.string().max(255, "Los comentarios deben tener como máximo 255 caracteres.").optional(),
 });

@@ -47,7 +47,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       platform: "Netflix",
       rating: 1,
       finishDate: undefined,
-      season: 1,
+      season: "1",
       comments: "",
     },
   });
@@ -183,7 +183,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                       <div className="relative" key={index}>
                         <StarIcon fill={(field.value > index) ? "yellow" : "none"} color={field.value > index ? "yellow" : "gray"} />
                         <RadioGroupItem                          
-                          value={String(field.value)}                          
+                          value={String(rate)}                          
                           id={`option-${rate}`}                          
                           className="absolute top-1/2 left-1/2 translate-middle opacity-0"
                         />

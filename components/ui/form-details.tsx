@@ -47,7 +47,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
       platform: "Netflix",
       rating: 1,
       finishDate: undefined,
-      season: 1,
+      season: "1",
       comments: "",
     },
   });
@@ -228,7 +228,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
                             color={field.value > index ? "yellow" : "gray"}
                           />
                           <RadioGroupItem
-                            value={String(field.value)}
+                            value={String(rate)}
                             id={`option-${rate}`}
                             className="absolute top-1/2 left-1/2 translate-middle opacity-0"
                           />
