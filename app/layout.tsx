@@ -9,7 +9,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Diario de series Mignori",
+  title: "Diario de Películas y Series",
   description: "Diario para guardar series de plataformas de streaming en el año.",
 };
 
