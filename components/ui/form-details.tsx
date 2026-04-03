@@ -104,7 +104,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
     <Dialog
       open={open}
       onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalles de la serie</DialogTitle>
           <DialogDescription>Revisa los detalles de tu serie</DialogDescription>
