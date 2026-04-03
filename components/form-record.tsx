@@ -34,10 +34,6 @@ type FormRecordProps = {
   refreshSeries: () => void;
 };
 
-
-
-
-
 export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRecordProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,6 +47,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       comments: "",
     },
   });
+
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const supabase = createClient();
@@ -68,18 +65,18 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
     if (error) {
       console.error("Error inserting series:", error);
     } else {
-      console.log("Serie creada con exito");
       form.reset();
       onOpenChange(false);
       refreshSeries();
     }
   }
 
+
+
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}     
-      >
+      onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Creación de serie</DialogTitle>
@@ -176,15 +173,20 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-series-record-rating">Calificación</FieldLabel>
                   <RadioGroup
-                    defaultValue={field.value ? String(field.value) : "1"}
-                    onValueChange={field.onChange}
+                    value={field.value ? String(field.value) : "1"}
+                    onValueChange={(value) => field.onChange(Number(value))}
                     className="flex">
-                    {Array.from({length: 5}, (_, index) => index + 1).map((rate, index) => (
-                      <div className="relative" key={index}>
-                        <StarIcon fill={(field.value > index) ? "yellow" : "none"} color={field.value > index ? "yellow" : "gray"} />
-                        <RadioGroupItem                          
-                          value={String(rate)}                          
-                          id={`option-${rate}`}                          
+                    {Array.from({ length: 5 }, (_, index) => index + 1).map((rate, index) => (
+                      <div
+                        className="relative"
+                        key={index}>
+                        <StarIcon
+                          fill={field.value > index ? "yellow" : "none"}
+                          color={field.value > index ? "yellow" : "gray"}
+                        />
+                        <RadioGroupItem
+                          value={String(rate)}
+                          id={`option-${rate}`}
                           className="absolute top-1/2 left-1/2 translate-middle opacity-0"
                         />
                       </div>
