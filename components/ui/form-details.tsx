@@ -97,7 +97,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
         .eq("id", serie.id);
 
       if (error) {
-        console.error("Error inserting series:", error);
+        console.error("Error updating series:", error);
       } else {
         form.reset();
         toast.success("Datos guardados exitosamente", { position: "top-center" });
@@ -112,10 +112,11 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
     if (serie) {
       const { error } = await supabase.from("series").delete().eq("id", serie.id);
       if (error) {
-        console.error("Error deteling series:", error);
+        console.error("Error deleting series:", error);
       } else {
         form.reset();
         onOpenChange(false);
+        toast.success("Serie eliminada exitosamente", { position: "top-center" });
         refreshSeries();
       }
     }
