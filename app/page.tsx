@@ -64,7 +64,16 @@ export default function Home() {
   }, [refreshTrigger]);
 
   const filteredSeries = useMemo(() => {
-    if (!filters.year) return [];
+    if (filters.year === "all") {
+      return allSeries.filter((serie) => {
+        if (!serie.finished_at) return false;
+
+        const finishedType = serie.type.toLowerCase();
+        if (filters.type && filters.type !== "all" && finishedType !== filters.type) return false;
+
+        return true;
+      });
+    }
 
     return allSeries.filter((serie) => {
       if (!serie.finished_at) return false;
@@ -74,7 +83,8 @@ export default function Home() {
       const finishedMonth = String(finishedDate.getMonth() + 1).padStart(2, "0");
       const finishedType = serie.type.toLowerCase();
 
-       if (filters.type && finishedType !== filters.type) return false;
+      if (filters.type && filters.type !== "all" && finishedType !== filters.type) return false;
+
       if (finishedYear !== filters.year) return false;
       if (filters.month && finishedMonth !== filters.month) return false;
 
@@ -119,7 +129,6 @@ export default function Home() {
     }));
   };
 
-
   if (loading)
     return (
       <div className="relative h-screen w-screen">
@@ -140,11 +149,12 @@ export default function Home() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="2026">2026</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
-          {filters.year.length > 0 && (
+          {filters.year && filters.year !== "all" && (
             <Select onValueChange={(value) => handleSelectChange(value, "month")}>
               <SelectTrigger className="w-45">
                 <SelectValue placeholder="Seleccionar mes" />
@@ -171,9 +181,11 @@ export default function Home() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="serie">Serie</SelectItem> 
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="serie">Serie</SelectItem>
                   <SelectItem value="película">Pelicula</SelectItem>
                   <SelectItem value="documental">Documental</SelectItem>
+                  <SelectItem value="miniserie">Miniserie</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -185,7 +197,8 @@ export default function Home() {
       </div>
       <div>
         <Table className="text-center">
-          <TableCaption>Filtra algunas series</TableCaption>
+          {filteredSeries.length > 0 && <TableCaption>{allSeries.length} series encontradas</TableCaption>}
+
           <TableHeader>
             <TableRow>
               <TableHead className="text-center">Tipo</TableHead>

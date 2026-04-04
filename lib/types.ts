@@ -3,7 +3,7 @@ import * as z from "zod";
 export type Series = {
   id: string;
   title: string;
-  type: "Serie" | "Película" | "Documental";
+  type: "Serie" | "Película" | "Documental" | "Miniserie";
   platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+" | "Cine";
   rating: number;
   season: string;
@@ -13,7 +13,7 @@ export type Series = {
 };
 
 export const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+", "Cine"] as const;
-export const types = ["Serie", "Película", "Documental"] as const;
+export const types = ["Serie", "Película", "Documental", "Miniserie"] as const;
 
 export const formSchema = z.object({
   title: z
