@@ -7,7 +7,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import FormRecord from "@/components/form-record";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
-import FormDetails from "@/components/ui/form-details";
+import FormDetails from "@/components/form-details";
 import { Series } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchSeries = async () => {
-      const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: true });
+      const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: false });
       if (error) {
         console.error("Error fetching series:", error);
       } else {
@@ -227,7 +227,7 @@ export default function Home() {
         <Table className="text-center">
           {filteredSeries.length > 0 && (
             <TableCaption>
-              Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length} series
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length}
             </TableCaption>
           )}
 

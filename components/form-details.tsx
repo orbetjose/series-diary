@@ -38,9 +38,11 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, StarIcon, Trash2Icon } from "lucide-react";
+import { CalendarIcon, Heart, StarIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { is } from "date-fns/locale";
 
 type FormDetailsProps = {
   open: boolean;
@@ -59,6 +61,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
       type: "Serie",
       platform: "Netflix",
       rating: 1,
+      couple: false,
       finishDate: undefined,
       season: "1",
       comments: "",
@@ -72,6 +75,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
         type: serie.type,
         platform: serie.platform,
         rating: serie.rating,
+        couple: serie.couple,
         finishDate: serie.finished_at ? new Date(serie.finished_at) : undefined,
         season: serie.season,
         comments: serie.comments,
@@ -92,6 +96,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
           comments: data.comments,
           platform: data.platform,
           rating: data.rating,
+          couple: data.couple,
           finished_at: data.finishDate.toISOString(),
         })
         .eq("id", serie.id);
@@ -127,7 +132,6 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
       setIsEditing(false);
     }
   }, [open]);
-
 
   return (
     <div>
@@ -285,6 +289,52 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
                 )}
               />
               <Controller
+                name="couple"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field
+                    className="block space-y-2 relative"
+                    orientation="horizontal"
+                    data-invalid={fieldState.invalid}>
+                    <FieldLabel
+                      htmlFor="form-series-record-couple"
+                      className="">
+                      Pareja
+                    </FieldLabel>
+                    {isEditing ? (
+                      <div>
+                        <Checkbox
+                          id="form-series-record-couple"
+                          className="absolute left-1 top-7 opacity-0"
+                          checked={field.value ?? false}
+                          onCheckedChange={(checked) => field.onChange(checked === true)}
+                        />
+                        {field.value ? (
+                          <Heart
+                            fill="#FF46A2"
+                            color="#FF46A2"
+                          />
+                        ) : (
+                          <Heart />
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        {field.value ? (
+                          <Heart
+                            fill="#FF46A2"
+                            color="#FF46A2"
+                          />
+                        ) : (
+                          <Heart />
+                        )}
+                      </div>
+                    )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
                 name="finishDate"
                 control={form.control}
                 render={({ field: { value, onChange }, fieldState }) => (
@@ -385,7 +435,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
                   type="button"
                   variant="destructive"
                   onClick={(e) => {
-                    e.preventDefault();                    
+                    e.preventDefault();
                     setDeleteModal(true);
                   }}>
                   Eliminar serie
@@ -404,7 +454,9 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
         </DialogContent>
       </Dialog>
       {deleteModal && (
-        <AlertDialog open={deleteModal} onOpenChange={setDeleteModal}>
+        <AlertDialog
+          open={deleteModal}
+          onOpenChange={setDeleteModal}>
           <AlertDialogContent size="sm">
             <AlertDialogHeader>
               <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">

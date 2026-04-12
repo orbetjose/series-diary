@@ -16,17 +16,19 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, StarIcon } from "lucide-react";
+import { CalendarIcon, StarIcon, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import * as z from "zod";
 
 import { plataforms, types } from "@/lib/types";
 import { formSchema } from "@/lib/types";
+
 
 type FormRecordProps = {
   open: boolean;
@@ -43,11 +45,11 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       platform: "Netflix",
       rating: 1,
       finishDate: undefined,
+      couple: false,
       season: "1",
       comments: "",
     },
   });
-
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     const supabase = createClient();
@@ -59,6 +61,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       comments: data.comments,
       platform: data.platform,
       rating: data.rating,
+      couple: data.couple,
       finished_at: data.finishDate.toISOString(),
     });
 
@@ -70,8 +73,6 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       refreshSeries();
     }
   }
-
-
 
   return (
     <Dialog
@@ -192,6 +193,37 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
                       </div>
                     ))}
                   </RadioGroup>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="couple"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field 
+                  className="block space-y-2 relative"
+                  orientation="horizontal"
+                  data-invalid={fieldState.invalid}>
+                  <FieldLabel
+                    htmlFor="form-series-record-couple"
+                    className="">
+                    Pareja
+                  </FieldLabel>
+                  <Checkbox
+                    id="form-series-record-couple"
+                    className="absolute left-1 top-7 opacity-0"
+                    checked={field.value ?? false}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  {field.value ? (
+                    <Heart
+                      fill="#FF46A2"
+                      color="#FF46A2"
+                    />
+                  ) : (
+                    <Heart />
+                  )}
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

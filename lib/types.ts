@@ -6,6 +6,7 @@ export type Series = {
   type: "Serie" | "Película" | "Documental" | "Miniserie";
   platform: "Netflix" | "Amazon Prime" | "HBO" | "Disney+" | "Cine";
   rating: number;
+  couple: boolean;
   season: string;
   comments: string;
   created_at: string;
@@ -27,6 +28,7 @@ export const formSchema = z.object({
     message: "El tipo es requerido.",
   }),
   rating: z.number().min(1, "La calificación debe ser al menos 1.").max(5, "La calificación debe ser como máximo 5."),
+  couple: z.boolean().optional(),
   finishDate: z.date({
     message: "La fecha es requerida.",
   }),
