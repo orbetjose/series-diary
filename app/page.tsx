@@ -10,6 +10,15 @@ import { LogoutButton } from "@/components/logout-button";
 import FormDetails from "@/components/ui/form-details";
 import { Series } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type filters = {
   year: string;
@@ -45,6 +54,9 @@ export default function Home() {
     type: "",
   });
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -63,6 +75,7 @@ export default function Home() {
     fetchSeries();
   }, [refreshTrigger]);
 
+  // Filtrar series primero
   const filteredSeries = useMemo(() => {
     if (filters.year === "all") {
       return allSeries.filter((serie) => {
@@ -91,6 +104,23 @@ export default function Home() {
       return true;
     });
   }, [allSeries, filters]);
+
+  // Calcular datos paginados DESPUÉS de filtrar
+  const paginatedSeries = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredSeries.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredSeries, currentPage]);
+
+  // Calcular total de páginas basado en series filtradas
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredSeries.length / itemsPerPage);
+  }, [filteredSeries.length]);
+
+  // Resetear a página 1 cuando cambien los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // Obtener meses disponibles cuando cambia el año
   useEffect(() => {
@@ -164,9 +194,7 @@ export default function Home() {
                   {months
                     .filter((month) => availableMonths.includes(month.value))
                     .map((month) => (
-                      <SelectItem
-                        key={month.value}
-                        value={month.value}>
+                      <SelectItem key={month.value} value={month.value}>
                         {month.name}
                       </SelectItem>
                     ))}
@@ -197,7 +225,11 @@ export default function Home() {
       </div>
       <div>
         <Table className="text-center">
-          {filteredSeries.length > 0 && <TableCaption>{allSeries.length} series encontradas</TableCaption>}
+          {filteredSeries.length > 0 && (
+            <TableCaption>
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length} series
+            </TableCaption>
+          )}
 
           <TableHeader>
             <TableRow>
@@ -210,14 +242,14 @@ export default function Home() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredSeries.length > 0 &&
-              filteredSeries.map((serie) => (
+            {paginatedSeries.length > 0 &&
+              paginatedSeries.map((serie) => (
                 <TableRow key={serie.id}>
                   <TableCell>
-                    <span
-                      className={`${serie.type === "Serie" ? "bg-green-600" : ""} ${serie.type === "Película" ? "bg-white text-black" : ""} ${serie.type === "Documental" ? "bg-red-600" : ""} px-2 rounded-full`}>
+                    <Badge
+                      className={`${serie.type === "Serie" ? "dark:bg-green-950 dark:text-green-300" : ""} ${serie.type === "Miniserie" ? "dark:bg-blue-950 dark:text-blue-300" : ""} ${serie.type === "Película" ? "dark:bg-purple-950 dark:text-purple-300" : ""} ${serie.type === "Documental" ? "dark:bg-red-950 dark:text-red-300" : ""} px-2 rounded-full`}>
                       {serie.type}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell>{serie.title}</TableCell>
                   <TableCell>{serie.platform}</TableCell>
@@ -231,17 +263,40 @@ export default function Home() {
           </TableBody>
         </Table>
       </div>
-      <FormRecord
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
-      />
-      <FormDetails
-        open={isOpenDetails}
-        onOpenChange={setIsOpenDetails}
-        serie={selectedSerie}
-        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
-      />
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="py-8">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page} className="cursor-pointer">
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      <FormRecord open={isOpen} onOpenChange={setIsOpen} refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)} />
+      <FormDetails open={isOpenDetails} onOpenChange={setIsOpenDetails} serie={selectedSerie} refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)} />
       <div className="pt-12 text-center">
         <LogoutButton />
       </div>
