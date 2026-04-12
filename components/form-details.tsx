@@ -462,9 +462,9 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
               <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
                 <Trash2Icon />
               </AlertDialogMedia>
-              <AlertDialogTitle>Eliminar serie</AlertDialogTitle>
+              <AlertDialogTitle>Eliminar </AlertDialogTitle>
               <AlertDialogDescription>
-                Esto eliminará permanentemente esta serie. ¿Estás seguro de que deseas continuar?
+                Esto eliminará permanentemente. ¿Estás seguro de que deseas continuar?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
