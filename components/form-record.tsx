@@ -25,18 +25,23 @@ import { CalendarIcon, StarIcon, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import * as z from "zod";
+import { v4 as uuidv4 } from "uuid";
 
-import { plataforms, types } from "@/lib/types";
+import { plataforms, Series, types } from "@/lib/types";
 import { formSchema } from "@/lib/types";
-
+import { useEffect, useState } from "react";
 
 type FormRecordProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   refreshSeries: () => void;
+  mode: "create" | "edit";
+  serie: Series | null;
 };
 
-export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRecordProps) {
+export default function FormRecord({ open, onOpenChange, serie, refreshSeries, mode }: FormRecordProps) {
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,11 +55,39 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       comments: "",
     },
   });
+  const { reset } = form;
+
+  useEffect(() => {
+    if (serie && mode === "edit") {
+      reset({
+        title: serie.title,
+        type: serie.type,
+        platform: serie.platform,
+        rating: serie.rating,
+        couple: serie.couple,
+        finishDate: serie.finished_at ? new Date(serie.finished_at) : undefined,
+        season: serie.season,
+        comments: serie.comments,
+      });
+    } else {
+      reset({
+        title: "",
+        type: "Serie",
+        platform: "Netflix",
+        rating: 1,
+        finishDate: undefined,
+        couple: false,
+        season: "1",
+        comments: "",
+      });
+    }
+  }, [serie, reset, mode]);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    if (loading) return;
+    setLoading(true);
     const supabase = createClient();
-
-    const { error } = await supabase.from("series").insert({
+    const payload = {
       type: data.type,
       title: data.title,
       season: data.season,
@@ -63,15 +96,29 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
       rating: data.rating,
       couple: data.couple,
       finished_at: data.finishDate.toISOString(),
-    });
+    };
 
-    if (error) {
-      console.error("Error inserting series:", error);
+    if (mode === "create") {
+      const id = uuidv4();
+      const { error } = await supabase.from("series").insert({
+        id,
+        ...payload,
+      });
+      if (error) {
+        console.error("Error inserting series:", error);
+        setLoading(false);
+      }
     } else {
-      form.reset();
-      onOpenChange(false);
-      refreshSeries();
+      const { error } = await supabase.from("series").update(payload).eq("id", serie?.id);
+      if (error) {
+        console.error("Error updating series:", error);
+        setLoading(false);
+      }
     }
+    form.reset();
+    onOpenChange(false);
+    refreshSeries();
+    setLoading(false);
   }
 
   return (
@@ -201,7 +248,7 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
               name="couple"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field 
+                <Field
                   className="block space-y-2 relative"
                   orientation="horizontal"
                   data-invalid={fieldState.invalid}>
@@ -300,11 +347,22 @@ export default function FormRecord({ open, onOpenChange, refreshSeries }: FormRe
           <DialogClose asChild>
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
-          <Button
-            type="submit"
-            form="form-series-record">
-            Guardar
-          </Button>
+          {mode === "edit" && (
+            <Button
+              type="submit"
+              form="form-series-record"
+              disabled={loading}>
+              {loading ? "Actualizando..." : "Guardar"}
+            </Button>
+          )}
+          {mode === "create" && (
+            <Button
+              type="submit"
+              form="form-series-record"
+              disabled={loading}>
+              {loading ? "Creando..." : "Crear"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -12,6 +12,7 @@ export type Series = {
   created_at: string;
   finished_at: string | null;
 };
+export type Mode = "create" | "edit";
 
 export const plataforms = ["Netflix", "Amazon Prime", "HBO", "Disney+", "Cine"] as const;
 export const types = ["Serie", "Película", "Documental", "Miniserie"] as const;

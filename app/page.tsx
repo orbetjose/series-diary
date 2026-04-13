@@ -2,12 +2,19 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FormRecord from "@/components/form-record";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
-import FormDetails from "@/components/form-details";
 import { Series } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +26,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { MoreHorizontalIcon, Trash2Icon, PencilIcon, EyeIcon } from "lucide-react";
+import { Mode } from "@/lib/types";
+import ConfirmationDelete from "@/components/confirmation-delete";
+import ShowDetails from "@/components/show-details";
 
 type filters = {
   year: string;
@@ -42,8 +53,10 @@ const months = [
 ];
 
 export default function Home() {
+  const [mode, setMode] = useState<Mode>("create");
   const [allSeries, setAllSeries] = useState<Series[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
   const [isOpenDetails, setIsOpenDetails] = useState(false);
   const [selectedSerie, setSelectedSerie] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +88,6 @@ export default function Home() {
     fetchSeries();
   }, [refreshTrigger]);
 
-  // Filtrar series primero
   const filteredSeries = useMemo(() => {
     if (filters.year === "all") {
       return allSeries.filter((serie) => {
@@ -194,7 +206,9 @@ export default function Home() {
                   {months
                     .filter((month) => availableMonths.includes(month.value))
                     .map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
+                      <SelectItem
+                        key={month.value}
+                        value={month.value}>
                         {month.name}
                       </SelectItem>
                     ))}
@@ -219,7 +233,13 @@ export default function Home() {
             </Select>
           )}
           <div>
-            <Button onClick={() => setIsOpen(true)}>Crear</Button>
+            <Button
+              onClick={() => {
+                setIsOpen(true);
+                setMode("create");
+              }}>
+              Crear
+            </Button>
           </div>
         </div>
       </div>
@@ -227,7 +247,8 @@ export default function Home() {
         <Table className="text-center">
           {filteredSeries.length > 0 && (
             <TableCaption>
-              Mostrando {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length}
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} -{" "}
+              {Math.min(currentPage * itemsPerPage, filteredSeries.length)} de {filteredSeries.length}
             </TableCaption>
           )}
 
@@ -256,7 +277,44 @@ export default function Home() {
                   <TableCell>{serie.finished_at ? new Date(serie.finished_at).toLocaleDateString() : "-"}</TableCell>
                   <TableCell>{serie.season}</TableCell>
                   <TableCell>
-                    <Button onClick={() => showDetails(serie)}> Detalles</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="More Options">
+                          <MoreHorizontalIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-40">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem onClick={() => {setSelectedSerie(serie); setIsOpenDetails(true);}}>
+                            <EyeIcon />
+                            Ver
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedSerie(serie);
+                              setMode("edit");
+                              setIsOpen(true);
+                            }}>
+                            <PencilIcon />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => {
+                              setSelectedSerie(serie);
+                              setDeleteModal(true);
+                            }}>
+                            <Trash2Icon />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -278,7 +336,10 @@ export default function Home() {
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <PaginationItem key={page}>
-                  <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page} className="cursor-pointer">
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer">
                     {page}
                   </PaginationLink>
                 </PaginationItem>
@@ -295,8 +356,21 @@ export default function Home() {
         </div>
       )}
 
-      <FormRecord open={isOpen} onOpenChange={setIsOpen} refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)} />
-      <FormDetails open={isOpenDetails} onOpenChange={setIsOpenDetails} serie={selectedSerie} refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)} />
+      <FormRecord
+        open={isOpen}
+        serie={selectedSerie}
+        mode={mode}
+        onOpenChange={setIsOpen}
+        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
+      />
+      <ConfirmationDelete
+        open={deleteModal}
+        serie={selectedSerie}
+        onOpenChange={setDeleteModal}
+        refreshSeries={() => setRefreshTrigger(refreshTrigger + 1)}
+      />
+      <ShowDetails open={isOpenDetails} serie={selectedSerie} onOpenChange={setIsOpenDetails} />
+
       <div className="pt-12 text-center">
         <LogoutButton />
       </div>

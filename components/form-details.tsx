@@ -30,7 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,9 +39,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Heart, StarIcon, Trash2Icon } from "lucide-react";
+import { CalendarIcon, Heart, StarIcon, Trash2Icon, MoreHorizontalIcon } from "lucide-react";
 import { toast } from "sonner";
-import { is } from "date-fns/locale";
 
 type FormDetailsProps = {
   open: boolean;
@@ -121,7 +119,7 @@ export default function FormDetails({ open, onOpenChange, serie, refreshSeries }
       } else {
         form.reset();
         onOpenChange(false);
-        toast.success("Serie eliminada exitosamente", { position: "top-center" });
+        toast.success("Eliminado exitosamente", { position: "top-center" });
         refreshSeries();
       }
     }
