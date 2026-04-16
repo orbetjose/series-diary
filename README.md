@@ -80,8 +80,8 @@ Durante el desarrollo de este proyecto aprendí:
 
 **Tu Nombre**
 - GitHub: [@orbetjose](https://github.com/orbetjose)
-- Portafolio: [tu-portfolio.com](https://tu-portfolio.com)
-- LinkedIn: [Tu LinkedIn](https://linkedin.com/in/tu-perfil)
+- Portafolio: [tu-portfolio.com](https://orbet-lozada.netlify.app/)
+- LinkedIn: [Tu LinkedIn](https://www.linkedin.com/in/orbet-lozada/)
 
 ---
 
