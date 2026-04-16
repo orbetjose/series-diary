@@ -1,9 +1,6 @@
-# 📺 [Nombre de tu App] - Tracker de Series y Películas
+# 📺 Tracker de Series y Películas
 
 > Una aplicación web para registrar y gestionar series, películas y documentales vistos durante el año.
-
-[![Demo Video](https://img.shields.io/badge/▶️-Ver_Demo-red?style=for-the-badge)](link-a-tu-video)
-[![Estado](https://img.shields.io/badge/Estado-Completado-success?style=for-the-badge)]()
 
 ## 🎯 Características
 
