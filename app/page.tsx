@@ -219,7 +219,7 @@ export default function Home() {
           {filters.year.length > 0 && (
             <Select onValueChange={(value) => handleSelectChange(value, "type")}>
               <SelectTrigger className="w-45">
-                <SelectValue placeholder="Seleccionar tipo serie" />
+                <SelectValue placeholder="Seleccionar tipo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
