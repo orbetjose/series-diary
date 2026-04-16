@@ -20,11 +20,16 @@
 ## 📸 Capturas de Pantalla
 
 ### Dashboard Principal
-![Dashboard](./screenshots/creacion-series-diario.webp)
-*Vista general con estadísticas del año*
+<a href="./screenshots/dashboard-series-diario.webp">
+  <img src="./screenshots/dashboard-series-diario.webp" width="400" alt="Click para ver tamaño completo">
+</a>
+
+*Vista general*
 
 ### Agregar Contenido
-![Agregar](./screenshots/add-content.webp)
+<a href="./screenshots/creacion-series-diario.webp">
+  <img src="./screenshots/creacion-series-diario.webp" width="400" alt="Click para ver tamaño completo">
+</a>
 *Formulario para registrar nuevo contenido*
 
 
