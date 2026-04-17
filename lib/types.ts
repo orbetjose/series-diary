@@ -34,5 +34,5 @@ export const formSchema = z.object({
     message: "La fecha es requerida.",
   }),
   season: z.string().max(32, "La temporada debe tener como máximo 32 caracteres.").optional(),
-  comments: z.string().max(255, "Los comentarios deben tener como máximo 255 caracteres.").optional(),
+  comments: z.string().max(355, "Los comentarios deben tener como máximo 355 caracteres.").optional(),
 });
