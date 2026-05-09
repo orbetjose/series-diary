@@ -43,7 +43,7 @@ export default function RootLayout({
           disableTransitionOnChange>
           <div className="flex justify-center max-w-xl mx-auto">
             <NavigationMenu>
-              <NavigationMenuList>
+              <NavigationMenuList className="gap-2 pt-4">
                 <NavigationMenuItem>
                   <NavigationMenuLink
                     asChild
