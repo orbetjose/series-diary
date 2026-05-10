@@ -26,9 +26,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import * as z from "zod";
 import { v4 as uuidv4 } from "uuid";
-
-import { plataforms, Series, types } from "@/lib/types";
-import { formSchema } from "@/lib/types";
+import { plataforms, Series, types, formSchema } from "@/lib/types";
 import { useEffect, useState } from "react";
 
 type FormRecordProps = {

@@ -22,7 +22,7 @@ export default function ShowDetails({ open, onOpenChange, serie }: ShowDetailsPr
     if (!dateString) return "Fecha no disponible";
     const date = new Date(dateString);
     return date.toLocaleDateString();
-  };
+  }; 
 
   return (
     <Dialog
@@ -44,8 +44,8 @@ export default function ShowDetails({ open, onOpenChange, serie }: ShowDetailsPr
                   className="relative"
                   key={index}>
                   <StarIcon
-                    fill={serie?.rating && serie.rating > index ? "yellow" : "none"}
-                    color={serie?.rating && serie.rating > index ? "yellow" : "gray"}
+                    fill={serie?.rating && serie.rating >= index ? "yellow" : "none"}
+                    color={serie?.rating && serie.rating >= index ? "yellow" : "gray"}
                   />
                 </div>
               ))}
