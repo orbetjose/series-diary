@@ -123,7 +123,7 @@ export default function FormRecord({ open, onOpenChange, serie, refreshSeries, m
     <Dialog
       open={open}
       onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-sm md:max-w-lg max-h-[85vh] md:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Creación de serie</DialogTitle>
           <DialogDescription>Ingresa los detalles de la serie.</DialogDescription>
