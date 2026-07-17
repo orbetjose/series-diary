@@ -75,6 +75,7 @@ export default function Home() {
 
   const supabase = createClient();
 
+
   useEffect(() => {
     const fetchSeries = async () => {
       const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: false });
@@ -90,6 +91,8 @@ export default function Home() {
 
     fetchSeries();
   }, [refreshTrigger]);
+
+
 
   const filteredSeries = useMemo(() => {
     if (filters.year === "all") {
@@ -185,8 +188,9 @@ export default function Home() {
     );
 
   return (
-    <main className="md:max-w-4xl mx-auto min-h-screen">
+    <main className="md:max-w-7xl mx-auto min-h-screen">
       <h1 className="text-center text-2xl pt-4">Historial</h1>
+
       <div className="flex gap-4 pb-4 pt-4 justify-center">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <Select onValueChange={(value) => handleSelectChange(value, "year")}>

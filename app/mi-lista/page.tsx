@@ -42,7 +42,7 @@ export default function MiLista() {
           Agregar
         </Button>
       </div>
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <Table>
           <TableCaption>Lista de contenido.</TableCaption>
           <TableHeader>
