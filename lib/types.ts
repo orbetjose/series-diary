@@ -30,7 +30,7 @@ export const formSchema = z.object({
   title: z
     .string()
     .min(5, "El título debe tener al menos 5 caracteres.")
-    .max(42, "El título debe tener como máximo 42 caracteres."),
+    .max(300, "El título debe tener como máximo 300 caracteres."),
   platform: z.enum(plataforms, {
     message: "La plataforma es requerida.",
   }),
